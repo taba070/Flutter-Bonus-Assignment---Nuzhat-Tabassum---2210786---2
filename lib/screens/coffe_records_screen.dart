@@ -128,6 +128,47 @@ class _CoffeRecordsScreenState extends State<CoffeRecordsScreen> {
     descriptionController.dispose();
   }
 
+  Future<void> _showDeleteDialog(
+    BuildContext context,
+    CoffeeStateManagement csm,
+    CoffeeRecordsModel coffeeRecord,
+  ) async {
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text("Delete Coffee Record"),
+          content: Text(
+            "Are you sure you want to delete "
+            "\"${coffeeRecord.title}\"?",
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(false);
+              },
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(true);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text("Delete"),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldDelete == true) {
+      await csm.deleteCoffeeRecord(coffeeRecord.id);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -191,16 +232,32 @@ class _CoffeRecordsScreenState extends State<CoffeRecordsScreen> {
                           "Amount: ${coffeeRecord.amount}\n"
                           "ID: ${coffeeRecord.id}",
                         ),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.edit),
-                          tooltip: "Edit",
-                          onPressed: () {
-                            _showEditDialog(
-                              context,
-                              csm,
-                              coffeeRecord,
-                            );
-                          },
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit),
+                              tooltip: "Edit",
+                              onPressed: () {
+                                _showEditDialog(
+                                  context,
+                                  csm,
+                                  coffeeRecord,
+                                );
+                              },
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete),
+                              tooltip: "Delete",
+                              onPressed: () {
+                                _showDeleteDialog(
+                                  context,
+                                  csm,
+                                  coffeeRecord,
+                                );
+                              },
+                            ),
+                          ],
                         ),
                       ),
                     );
