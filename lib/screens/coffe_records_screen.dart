@@ -12,6 +12,122 @@ class CoffeRecordsScreen extends StatefulWidget {
 }
 
 class _CoffeRecordsScreenState extends State<CoffeRecordsScreen> {
+  Future<void> _showEditDialog(
+    BuildContext context,
+    CoffeeStateManagement csm,
+    CoffeeRecordsModel coffeeRecord,
+  ) async {
+    final titleController =
+        TextEditingController(text: coffeeRecord.title);
+
+    final amountController =
+        TextEditingController(text: coffeeRecord.amount.toString());
+
+    final descriptionController =
+        TextEditingController(text: coffeeRecord.des);
+
+    final formKey = GlobalKey<FormState>();
+
+    await showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text("Edit Coffee Record"),
+          content: Form(
+            key: formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    controller: titleController,
+                    decoration: const InputDecoration(
+                      labelText: "Title",
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return "Please enter title";
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 15),
+                  TextFormField(
+                    controller: amountController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: "Amount",
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return "Please enter amount";
+                      }
+
+                      if (double.tryParse(value) == null) {
+                        return "Please enter a valid amount";
+                      }
+
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 15),
+                  TextFormField(
+                    controller: descriptionController,
+                    maxLines: 3,
+                    decoration: const InputDecoration(
+                      labelText: "Description",
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return "Please enter description";
+                      }
+                      return null;
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+              },
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (!formKey.currentState!.validate()) {
+                  return;
+                }
+
+                final updatedRecord = CoffeeRecordsModel(
+                  id: coffeeRecord.id,
+                  title: titleController.text.trim(),
+                  des: descriptionController.text.trim(),
+                  amount:
+                      double.tryParse(amountController.text.trim()) ?? 0.0,
+                  date: coffeeRecord.date,
+                );
+
+                await csm.updateCoffeeRecord(updatedRecord);
+
+                if (dialogContext.mounted) {
+                  Navigator.of(dialogContext).pop();
+                }
+              },
+              child: const Text("Update"),
+            ),
+          ],
+        );
+      },
+    );
+
+    titleController.dispose();
+    amountController.dispose();
+    descriptionController.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -26,7 +142,6 @@ class _CoffeRecordsScreenState extends State<CoffeRecordsScreen> {
         backgroundColor: Colors.brown,
         foregroundColor: Colors.white,
       ),
-
       body: Consumer<CoffeeStateManagement>(
         builder: (context, csm, _) {
           return AppBackgroudDesignWidget(
@@ -76,6 +191,17 @@ class _CoffeRecordsScreenState extends State<CoffeRecordsScreen> {
                           "Amount: ${coffeeRecord.amount}\n"
                           "ID: ${coffeeRecord.id}",
                         ),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.edit),
+                          tooltip: "Edit",
+                          onPressed: () {
+                            _showEditDialog(
+                              context,
+                              csm,
+                              coffeeRecord,
+                            );
+                          },
+                        ),
                       ),
                     );
                   },
@@ -85,7 +211,6 @@ class _CoffeRecordsScreenState extends State<CoffeRecordsScreen> {
           );
         },
       ),
-
       floatingActionButton: Consumer<CoffeeStateManagement>(
         builder: (context, csm, _) {
           return FloatingActionButton(
