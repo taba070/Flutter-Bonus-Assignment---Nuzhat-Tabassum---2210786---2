@@ -21,7 +21,7 @@ class CoffeeStateManagement with ChangeNotifier {
     notifyListeners();
   }
 
-  // CREATE - Add coffee record to Firebase
+  // CREATE
   Future<void> addCoffeeRecord(
     CoffeeRecordsModel coffeeRecord,
   ) async {
@@ -34,7 +34,7 @@ class CoffeeStateManagement with ChangeNotifier {
     });
   }
 
-  // UPDATE - Update existing coffee record in Firebase
+  // UPDATE
   Future<void> updateCoffeeRecord(
     CoffeeRecordsModel coffeeRecord,
   ) async {
@@ -59,7 +59,27 @@ class CoffeeStateManagement with ChangeNotifier {
     });
   }
 
-  // READ - Get real-time coffee records from Firebase
+  // DELETE
+  Future<void> deleteCoffeeRecord(int id) async {
+    final querySnapshot = await _firestore
+        .collection('coffee_records')
+        .where('id', isEqualTo: id)
+        .limit(1)
+        .get();
+
+    if (querySnapshot.docs.isEmpty) {
+      return;
+    }
+
+    final docId = querySnapshot.docs.first.id;
+
+    await _firestore
+        .collection('coffee_records')
+        .doc(docId)
+        .delete();
+  }
+
+  // READ - Real-time data
   Stream<List<CoffeeRecordsModel>> getCoffeeRecords() {
     return _firestore.collection('coffee_records').snapshots().map(
       (snapshot) {
